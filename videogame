@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  >
+
+  <title>Costruisci il cubo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, #effaff 0%, #dff3ff 45%, #cbeaff 100%);
+      color: #17324d;
+      user-select: none;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #titolo {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: min(92%, 720px);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    #titolo h1 {
+      margin: 0;
+      color: #15508a;
+      font-size: clamp(25px, 4vw, 42px);
+      text-shadow: 0 2px 0 white;
+    }
+
+    #titolo p {
+      margin: 7px 0 0;
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: bold;
+      color: #42627d;
+    }
+
+    #pannello {
+      position: fixed;
+      left: 18px;
+      top: 110px;
+      z-index: 10;
+      width: 220px;
+      padding: 18px;
+      border: 3px solid white;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.90);
+      box-shadow: 0 10px 30px rgba(20, 70, 110, 0.20);
+      backdrop-filter: blur(8px);
+    }
+
+    #pannello h2 {
+      margin: 0 0 9px;
+      color: #15508a;
+      font-size: 22px;
+    }
+
+    #pannello p {
+      margin: 0 0 14px;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    #contatore {
+      margin: 10px 0 15px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #e8f7ff;
+      color: #15508a;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    #btnPiega {
+      background: linear-gradient(135deg, #ff9f1c, #ff6b35);
+      color: white;
+      box-shadow: 0 6px 14px rgba(255, 107, 53, 0.30);
+    }
+
+    #btnReset {
+      background: #1f78d1;
+      color: white;
+      box-shadow: 0 6px 14px rgba(31, 120, 209, 0.25);
+    }
+
+    #btnAiuto {
+      background: #70c1b3;
+      color: white;
+      box-shadow: 0 6px 14px rgba(112, 193, 179, 0.25);
+    }
+
+    #messaggio {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      z-index: 12;
+      width: min(92%, 680px);
+      transform: translateX(-50%);
+      padding: 15px 22px;
+      border: 3px solid white;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 8px 24px rgba(20, 70, 110, 0.20);
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #messaggio.successo {
+      background: #d8f8df;
+      color: #176b2c;
+    }
+
+    #messaggio.errore {
+      background: #ffe2e2;
+      color: #a02a2a;
+    }
+
+    #messaggio.info {
+      background: #fff8d8;
+      color: #826000;
+    }
+
+    #etichettaGriglia,
+    #etichettaPezzi {
+      position: fixed;
+      z-index: 8;
+      padding: 7px 13px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.88);
+      color: #15508a;
+      font-weight: bold;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(20, 70, 110, 0.12);
+    }
+
+    #etichettaGriglia {
+      top: 102px;
+      left: 47%;
+      transform: translateX(-50%);
+    }
+
+    #etichettaPezzi {
+      top: 102px;
+      right: 55px;
+    }
+
+    @media (max-width: 760px) {
+      #pannello {
+        top: auto;
+        bottom: 86px;
+        left: 10px;
+        width: 190px;
+        padding: 12px;
+      }
+
+      #pannello h2,
+      #pannello p {
+        display: none;
+      }
+
+      button {
+        min-height: 40px;
+        margin-top: 6px;
+        padding: 7px;
+        font-size: 14px;
+      }
+
+      #contatore {
+        margin: 0 0 5px;
+        padding: 7px;
+      }
+
+      #messaggio {
+        bottom: 12px;
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      #etichettaPezzi {
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="titolo">
+    <h1>🧊 Costruisci il cubo</h1>
+    <p>Trascina i sei quadrati sulla griglia e crea uno sviluppo corretto.</p>
+  </div>
+
+  <div id="etichettaGriglia">Area di costruzione</div>
+  <div id="etichettaPezzi">Quadrati</div>
+
+  <div id="pannello">
+    <h2>Come si gioca</h2>
+
+    <p>
+      Trascina tutti i quadrati sulla griglia. I lati devono toccarsi.
+      Quando hai finito, premi <strong>Piega!</strong>
+    </p>
+
+    <div id="contatore">Quadrati sulla griglia: 0 / 6</div>
+
+    <button id="btnPiega">✨ PIEGA!</button>
+    <button id="btnAiuto">💡 MOSTRA UN AIUTO</button>
+    <button id="btnReset">↻ RICOMINCIA</button>
+  </div>
+
+  <div id="messaggio">
+    Trascina i quadrati colorati sulla griglia.
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+
+    // =========================================================
+    // CONFIGURAZIONE GENERALE
+    // =========================================================
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdff3ff);
+
+    const camera = new THREE.OrthographicCamera(
+      -9,
+      9,
+      6,
+      -6,
+      0.1,
+      100
+    );
+
+    camera.position.set(0, 0, 20);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const intersection = new THREE.Vector3();
+
+    // =========================================================
+    // DIMENSIONI DELLA GRIGLIA
+    // =========================================================
+
+    const CELL_SIZE = 1.25;
+    const COLUMNS = 7;
+    const ROWS = 6;
+
+    let GRID_CENTER_X = 0;
+    let GRID_CENTER_Y = -0.2;
+
+    const squares = [];
+    const cubeGroup = new THREE.Group();
+
+    let selectedSquare = null;
+    let dragOffset = new THREE.Vector3();
+    let gameLocked = false;
+    let cubeAnimation = null;
+
+    scene.add(cubeGroup);
+
+    // =========================================================
+    // COLORI DEI SEI QUADRATI
+    // =========================================================
+
+    const colors = [
+      0xff6b6b,
+      0xffa94d,
+      0xffd43b,
+      0x69db7c,
+      0x4dabf7,
+      0xb197fc
+    ];
+
+    // =========================================================
+    // CREAZIONE DELLA GRIGLIA
+    // =========================================================
+
+    const gridGroup = new THREE.Group();
+    scene.add(gridGroup);
+
+    function createGrid() {
+      while (gridGroup.children.length > 0) {
+        const child = gridGroup.children[0];
+        gridGroup.remove(child);
+
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+
+        if (child.material) {
+          child.material.dispose();
+        }
+      }
+
+      for (let row = 0; row < ROWS; row++) {
+        for (let column = 0; column < COLUMNS; column++) {
+          const geometry = new THREE.PlaneGeometry(
+            CELL_SIZE * 0.94,
+            CELL_SIZE * 0.94
+          );
+
+          const material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.47,
+            side: THREE.DoubleSide
+          });
+
+          const cell = new THREE.Mesh(geometry, material);
+
+          const position = gridToWorld(column, row);
+          cell.position.set(position.x, position.y, -0.15);
+
+          gridGroup.add(cell);
+
+          const edgeGeometry = new THREE.EdgesGeometry(geometry);
+
+          const edgeMaterial = new THREE.LineBasicMaterial({
+            color: 0x8cc5e8,
+            transparent: true,
+            opacity: 0.7
+          });
+
+          const edges = new THREE.LineSegments(
+            edgeGeometry,
+            edgeMaterial
+          );
+
+          edges.position.copy(cell.position);
+          edges.position.z = -0.14;
+
+          gridGroup.add(edges);
+        }
+      }
+    }
+
+    // =========================================================
+    // CREAZIONE DEI QUADRATI
+    // =========================================================
+
+    function createSquare(index) {
+      const geometry = new THREE.PlaneGeometry(
+        CELL_SIZE * 0.88,
+        CELL_SIZE * 0.88
+      );
+
+      const material = new THREE.MeshBasicMaterial({
+        color: colors[index],
+        side: THREE.DoubleSide
+      });
+
+      const square = new THREE.Mesh(geometry, material);
+
+      square.userData.index = index;
+      square.userData.gridColumn = null;
+      square.userData.gridRow = null;
+      square.userData.onGrid = false;
+
+      scene.add(square);
+
+      const borderGeometry = new THREE.EdgesGeometry(geometry);
+
+      const borderMaterial = new THREE.LineBasicMaterial({
+        color: 0x17486f,
+        linewidth: 2
+      });
+
+      const border = new THREE.LineSegments(
+        borderGeometry,
+        borderMaterial
+      );
+
+      border.position.z = 0.03;
+      square.add(border);
+
+      squares.push(square);
+
+      return square;
+    }
+
+    function createAllSquares() {
+      for (let i = 0; i < 6; i++) {
+        createSquare(i);
+      }
+
+      placeSquaresAtStart();
+    }
+
+    // =========================================================
+    // POSIZIONI
+    // =========================================================
+
+    function gridToWorld(column, row) {
+      const startX =
+        GRID_CENTER_X - ((COLUMNS - 1) * CELL_SIZE) / 2;
+
+      const startY =
+        GRID_CENTER_Y + ((ROWS - 1) * CELL_SIZE) / 2;
+
+      return {
+        x: startX + column * CELL_SIZE,
+        y: startY - row * CELL_SIZE
+      };
+    }
+
+    function worldToGrid(x, y) {
+      const startX =
+        GRID_CENTER_X - ((COLUMNS - 1) * CELL_SIZE) / 2;
+
+      const startY =
+        GRID_CENTER_Y + ((ROWS - 1) * CELL_SIZE) / 2;
+
+      const column = Math.round((x - startX) / CELL_SIZE);
+      const row = Math.round((startY - y) / CELL_SIZE);
+
+      if (
+        column < 0 ||
+        column >= COLUMNS ||
+        row < 0 ||
+        row >= ROWS
+      ) {
+        return null;
+      }
+
+      return { column, row };
+    }
+
+    function placeSquaresAtStart() {
+      const startX = 6.7;
+      const startY = 2.8;
+
+      squares.forEach((square, index) => {
+        const column = index % 2;
+        const row = Math.floor(index / 2);
+
+        square.position.set(
+          startX + column * 1.25,
+          startY - row * 1.45,
+          0.2
+        );
+
+        square.rotation.set(0, 0, 0);
+        square.scale.set(1, 1, 1);
+        square.visible = true;
+
+        square.userData.gridColumn = null;
+        square.userData.gridRow = null;
+        square.userData.onGrid = false;
+      });
+
+      updateCounter();
+    }
+
+    // =========================================================
+    // CONTROLLO OCCUPAZIONE DELLE CELLE
+    // =========================================================
+
+    function isCellOccupied(column, row, excludedSquare = null) {
+      return squares.some((square) => {
+        return (
+          square !== excludedSquare &&
+          square.userData.onGrid &&
+          square.userData.gridColumn === column &&
+          square.userData.gridRow === row
+        );
+      });
+    }
+
+    function snapSquareToGrid(square) {
+      const gridPosition = worldToGrid(
+        square.position.x,
+        square.position.y
+      );
+
+      if (!gridPosition) {
+        return false;
+      }
+
+      if (
+        isCellOccupied(
+          gridPosition.column,
+          gridPosition.row,
+          square
+        )
+      ) {
+        return false;
+      }
+
+      const worldPosition = gridToWorld(
+        gridPosition.column,
+        gridPosition.row
+      );
+
+      square.position.set(
+        worldPosition.x,
+        worldPosition.y,
+        0.2
+      );
+
+      square.userData.gridColumn = gridPosition.column;
+      square.userData.gridRow = gridPosition.row;
+      square.userData.onGrid = true;
+
+      return true;
+    }
+
+    // =========================================================
+    // GESTIONE DEL TRASCINAMENTO
+    // =========================================================
+
+    function updatePointer(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+
+      pointer.x =
+        ((event.clientX - rect.left) / rect.width) * 2 - 1;
+
+      pointer.y =
+        -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function getPointerWorldPosition(event) {
+      updatePointer(event);
+      raycaster.setFromCamera(pointer, camera);
+
+      if (
+        raycaster.ray.intersectPlane(
+          dragPlane,
+          intersection
+        )
+      ) {
+        return intersection.clone();
+      }
+
+      return null;
+    }
+
+    function onPointerDown(event) {
+      if (gameLocked) {
+        return;
+      }
+
+      updatePointer(event);
+      raycaster.setFromCamera(pointer, camera);
+
+      const intersections = raycaster.intersectObjects(
+        squares.filter((square) => square.visible),
+        false
+      );
+
+      if (intersections.length === 0) {
+        return;
+      }
+
+      selectedSquare = intersections[0].object;
+
+      const pointerPosition = getPointerWorldPosition(event);
+
+      if (!pointerPosition) {
+        selectedSquare = null;
+        return;
+      }
+
+      dragOffset.copy(selectedSquare.position);
+      dragOffset.sub(pointerPosition);
+
+      selectedSquare.position.z = 1;
+      selectedSquare.scale.set(1.08, 1.08, 1.08);
+
+      selectedSquare.userData.gridColumn = null;
+      selectedSquare.userData.gridRow = null;
+      selectedSquare.userData.onGrid = false;
+
+      renderer.domElement.style.cursor = "grabbing";
+      updateCounter();
+
+      event.preventDefault();
+    }
+
+    function onPointerMove(event) {
+      if (gameLocked) {
+        return;
+      }
+
+      if (!selectedSquare) {
+        updatePointer(event);
+        raycaster.setFromCamera(pointer, camera);
+
+        const hits = raycaster.intersectObjects(
+          squares.filter((square) => square.visible),
+          false
+        );
+
+        renderer.domElement.style.cursor =
+          hits.length > 0 ? "grab" : "default";
+
+        return;
+      }
+
+      const pointerPosition = getPointerWorldPosition(event);
+
+      if (!pointerPosition) {
+        return;
+      }
+
+      selectedSquare.position.x =
+        pointerPosition.x + dragOffset.x;
+
+      selectedSquare.position.y =
+        pointerPosition.y + dragOffset.y;
+
+      selectedSquare.position.z = 1;
+
+      event.preventDefault();
+    }
+
+    function onPointerUp() {
+      if (!selectedSquare) {
+        return;
+      }
+
+      const snapped = snapSquareToGrid(selectedSquare);
+
+      if (!snapped) {
+        returnSquareToTray(selectedSquare);
+        showMessage(
+          "Questa posizione non è disponibile. Prova un'altra cella.",
+          "info"
+        );
+      } else {
+        showMessage(
+          "Ottimo! Continua a sistemare i quadrati.",
+          ""
+        );
+      }
+
+      selectedSquare.position.z = 0.2;
+      selectedSquare.scale.set(1, 1, 1);
+
+      selectedSquare = null;
+      renderer.domElement.style.cursor = "default";
+
+      updateCounter();
+    }
+
+    function returnSquareToTray(square) {
+      const index = square.userData.index;
+
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+
+      square.position.set(
+        6.7 + column * 1.25,
+        2.8 - row * 1.45,
+        0.2
+      );
+
+      square.userData.gridColumn = null;
+      square.userData.gridRow = null;
+      square.userData.onGrid = false;
+    }
+
+    renderer.domElement.addEventListener(
+      "pointerdown",
+      onPointerDown
+    );
+
+    renderer.domElement.addEventListener(
+      "pointermove",
+      onPointerMove
+    );
+
+    window.addEventListener("pointerup", onPointerUp);
+
+    // =========================================================
+    // VERIFICA DELLO SVILUPPO DEL CUBO
+    // =========================================================
+
+    function cellKey(column, row) {
+      return `${column},${row}`;
+    }
+
+    function vectorKey(vector) {
+      return `${vector.x},${vector.y},${vector.z}`;
+    }
+
+    function negate(vector) {
+      return {
+        x: -vector.x,
+        y: -vector.y,
+        z: -vector.z
+      };
+    }
+
+    function sameVector(a, b) {
+      return (
+        a.x === b.x &&
+        a.y === b.y &&
+        a.z === b.z
+      );
+    }
+
+    /*
+      Ogni quadrato riceve tre direzioni:
+      u = destra della faccia
+      v = alto della faccia
+      n = normale esterna della faccia
+
+      Muovendoci nello sviluppo piano, calcoliamo come
+      cambierebbe l'orientamento della faccia dopo la piegatura.
+    */
+
+    function orientationForNeighbour(orientation, dx, dy) {
+      const { u, v, n } = orientation;
+
+      // Quadrato a destra
+      if (dx === 1 && dy === 0) {
+        return {
+          u: negate(n),
+          v: { ...v },
+          n: { ...u }
+        };
+      }
+
+      // Quadrato a sinistra
+      if (dx === -1 && dy === 0) {
+        return {
+          u: { ...n },
+          v: { ...v },
+          n: negate(u)
+        };
+      }
+
+      // Quadrato sotto
+      if (dx === 0 && dy === 1) {
+        return {
+          u: { ...u },
+          v: { ...n },
+          n: negate(v)
+        };
+      }
+
+      // Quadrato sopra
+      if (dx === 0 && dy === -1) {
+        return {
+          u: { ...u },
+          v: negate(n),
+          n: { ...v }
+        };
+      }
+
+      return null;
+    }
+
+    function sameOrientation(first, second) {
+      return (
+        sameVector(first.u, second.u) &&
+        sameVector(first.v, second.v) &&
+        sameVector(first.n, second.n)
+      );
+    }
+
+    function validateCubeNet() {
+      const placedSquares = squares.filter(
+        (square) => square.userData.onGrid
+      );
+
+      if (placedSquares.length !== 6) {
+        return {
+          valid: false,
+          reason:
+            "Devi sistemare tutti e sei i quadrati sulla griglia."
+        };
+      }
+
+      const cells = new Map();
+
+      placedSquares.forEach((square) => {
+        const key = cellKey(
+          square.userData.gridColumn,
+          square.userData.gridRow
+        );
+
+        cells.set(key, square);
+      });
+
+      const firstSquare = placedSquares[0];
+
+      const firstKey = cellKey(
+        firstSquare.userData.gridColumn,
+        firstSquare.userData.gridRow
+      );
+
+      const orientations = new Map();
+
+      orientations.set(firstKey, {
+        u: { x: 1, y: 0, z: 0 },
+        v: { x: 0, y: 1, z: 0 },
+        n: { x: 0, y: 0, z: 1 }
+      });
+
+      const queue = [firstSquare];
+
+      const directions = [
+        { dx: 1, dy: 0 },
+        { dx: -1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: 0, dy: -1 }
+      ];
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+
+        const currentColumn =
+          current.userData.gridColumn;
+
+        const currentRow =
+          current.userData.gridRow;
+
+        const currentKey = cellKey(
+          currentColumn,
+          currentRow
+        );
+
+        const currentOrientation =
+          orientations.get(currentKey);
+
+        for (const direction of directions) {
+          const neighbourColumn =
+            currentColumn + direction.dx;
+
+          const neighbourRow =
+            currentRow + direction.dy;
+
+          const neighbourKey = cellKey(
+            neighbourColumn,
+            neighbourRow
+          );
+
+          const neighbour = cells.get(neighbourKey);
+
+          if (!neighbour) {
+            continue;
+          }
+
+          const calculatedOrientation =
+            orientationForNeighbour(
+              currentOrientation,
+              direction.dx,
+              direction.dy
+            );
+
+          if (!orientations.has(neighbourKey)) {
+            orientations.set(
+              neighbourKey,
+              calculatedOrientation
+            );
+
+            queue.push(neighbour);
+          } else {
+            const existingOrientation =
+              orientations.get(neighbourKey);
+
+            if (
+              !sameOrientation(
+                existingOrientation,
+                calculatedOrientation
+              )
+            ) {
+              return {
+                valid: false,
+                reason:
+                  "Alcune facce si sovrapporrebbero durante la piegatura."
+              };
+            }
+          }
+        }
+      }
+
+      if (orientations.size !== 6) {
+        return {
+          valid: false,
+          reason:
+            "I sei quadrati devono essere tutti collegati tra loro."
+        };
+      }
+
+      const normals = new Set();
+
+      orientations.forEach((orientation) => {
+        normals.add(vectorKey(orientation.n));
+      });
+
+      if (normals.size !== 6) {
+        return {
+          valid: false,
+          reason:
+            "Questo sviluppo non può chiudersi: due facce finirebbero nello stesso punto."
+        };
+      }
+
+      const expectedNormals = [
+        "1,0,0",
+        "-1,0,0",
+        "0,1,0",
+        "0,-1,0",
+        "0,0,1",
+        "0,0,-1"
+      ];
+
+      const hasAllCubeFaces = expectedNormals.every(
+        (normal) => normals.has(normal)
+      );
+
+      if (!hasAllCubeFaces) {
+        return {
+          valid: false,
+          reason:
+            "La disposizione non genera tutte le facce del cubo."
+        };
+      }
+
+      return {
+        valid: true,
+        orientations
+      };
+    }
+
+    // =========================================================
+    // ANIMAZIONE DEL CUBO
+    // =========================================================
+
+    function createCubeAnimation() {
+      gameLocked = true;
+
+      squares.forEach((square) => {
+        square.visible = false;
+      });
+
+      gridGroup.visible = false;
+      cubeGroup.clear();
+
+      const faceGeometry = new THREE.PlaneGeometry(
+        CELL_SIZE * 1.65,
+        CELL_SIZE * 1.65
+      );
+
+      const halfSize = (CELL_SIZE * 1.65) / 2;
+
+      const faceDefinitions = [
+        {
+          position: [0, 0, halfSize],
+          rotation: [0, 0, 0]
+        },
+        {
+          position: [0, 0, -halfSize],
+          rotation: [0, Math.PI, 0]
+        },
+        {
+          position: [halfSize, 0, 0],
+          rotation: [0, Math.PI / 2, 0]
+        },
+        {
+          position: [-halfSize, 0, 0],
+          rotation: [0, -Math.PI / 2, 0]
+        },
+        {
+          position: [0, halfSize, 0],
+          rotation: [-Math.PI / 2, 0, 0]
+        },
+        {
+          position: [0, -halfSize, 0],
+          rotation: [Math.PI / 2, 0, 0]
+        }
+      ];
+
+      const animationFaces = [];
+
+      faceDefinitions.forEach((definition, index) => {
+        const material = new THREE.MeshBasicMaterial({
+          color: colors[index],
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.95
+        });
+
+        const face = new THREE.Mesh(
+          faceGeometry,
+          material
+        );
+
+        const borderGeometry =
+          new THREE.EdgesGeometry(faceGeometry);
+
+        const borderMaterial =
+          new THREE.LineBasicMaterial({
+            color: 0x17324d
+          });
+
+        const border = new THREE.LineSegments(
+          borderGeometry,
+          borderMaterial
+        );
+
+        border.position.z = 0.008;
+        face.add(border);
+
+        face.userData.targetPosition =
+          new THREE.Vector3(...definition.position);
+
+        face.userData.targetRotation =
+          new THREE.Euler(...definition.rotation);
+
+        const angle =
+          (index / faceDefinitions.length) *
+          Math.PI *
+          2;
+
+        face.position.set(
+          Math.cos(angle) * 5,
+          Math.sin(angle) * 3,
+          0
+        );
+
+        face.rotation.set(0, 0, angle);
+        face.scale.set(0.75, 0.75, 0.75);
+
+        cubeGroup.add(face);
+        animationFaces.push(face);
+      });
+
+      cubeGroup.position.set(0.8, -0.2, 1);
+      cubeGroup.rotation.set(-0.35, 0.55, 0);
+
+      cubeAnimation = {
+        startTime: performance.now(),
+        duration: 1700,
+        faces: animationFaces
+      };
+    }
+
+    function easeInOutCubic(value) {
+      return value < 0.5
+        ? 4 * value * value * value
+        : 1 - Math.pow(-2 * value + 2, 3) / 2;
+    }
+
+    function updateCubeAnimation(time) {
+      if (!cubeAnimation) {
+        return;
+      }
+
+      const elapsed =
+        time - cubeAnimation.startTime;
+
+      const progress = Math.min(
+        elapsed / cubeAnimation.duration,
+        1
+      );
+
+      const eased = easeInOutCubic(progress);
+
+      cubeAnimation.faces.forEach(
+        (face, index) => {
+          const angle =
+            (index / cubeAnimation.faces.length) *
+            Math.PI *
+            2;
+
+          const startPosition = new THREE.Vector3(
+            Math.cos(angle) * 5,
+            Math.sin(angle) * 3,
+            0
+          );
+
+          face.position.lerpVectors(
+            startPosition,
+            face.userData.targetPosition,
+            eased
+          );
+
+          const startQuaternion =
+            new THREE.Quaternion().setFromEuler(
+              new THREE.Euler(0, 0, angle)
+            );
+
+          const targetQuaternion =
+            new THREE.Quaternion().setFromEuler(
+              face.userData.targetRotation
+            );
+
+          face.quaternion.slerpQuaternions(
+            startQuaternion,
+            targetQuaternion,
+            eased
+          );
+
+          const scale =
+            THREE.MathUtils.lerp(0.75, 1, eased);
+
+          face.scale.set(scale, scale, scale);
+        }
+      );
+
+      if (progress >= 1) {
+        cubeAnimation = null;
+
+        showMessage(
+          "🎉 Bravissimo! Il tuo sviluppo forma davvero un cubo!",
+          "successo"
+        );
+
+        createCelebrationParticles();
+      }
+    }
+
+    // =========================================================
+    // PARTICELLE DI FESTA
+    // =========================================================
+
+    const particles = [];
+
+    function createCelebrationParticles() {
+      for (let i = 0; i < 70; i++) {
+        const geometry =
+          new THREE.CircleGeometry(0.07, 8);
+
+        const material =
+          new THREE.MeshBasicMaterial({
+            color:
+              colors[
+                Math.floor(Math.random() * colors.length)
+              ],
+            side: THREE.DoubleSide
+          });
+
+        const particle =
+          new THREE.Mesh(geometry, material);
+
+        particle.position.set(
+          0.8,
+          -0.2,
+          2 + Math.random()
+        );
+
+        particle.userData.velocity =
+          new THREE.Vector3(
+            (Math.random() - 0.5) * 0.16,
+            Math.random() * 0.16 + 0.05,
+            0
+          );
+
+        particle.userData.life =
+          100 + Math.random() * 70;
+
+        scene.add(particle);
+        particles.push(particle);
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+
+        particle.position.add(
+          particle.userData.velocity
+        );
+
+        particle.userData.velocity.y -= 0.003;
+        particle.rotation.z += 0.08;
+        particle.userData.life -= 1;
+
+        if (particle.userData.life <= 0) {
+          scene.remove(particle);
+          particle.geometry.dispose();
+          particle.material.dispose();
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // =========================================================
+    // PULSANTI
+    // =========================================================
+
+    document
+      .getElementById("btnPiega")
+      .addEventListener("click", () => {
+        if (gameLocked) {
+          return;
+        }
+
+        const result = validateCubeNet();
+
+        if (!result.valid) {
+          showMessage(
+            `🤔 ${result.reason}`,
+            "errore"
+          );
+
+          shakeSquares();
+          return;
+        }
+
+        showMessage(
+          "Perfetto! Ora osserva la piegatura...",
+          "successo"
+        );
+
+        createCubeAnimation();
+      });
+
+    document
+      .getElementById("btnReset")
+      .addEventListener("click", resetGame);
+
+    document
+      .getElementById("btnAiuto")
+      .addEventListener("click", showHint);
+
+    function resetGame() {
+      gameLocked = false;
+      cubeAnimation = null;
+
+      cubeGroup.clear();
+      gridGroup.visible = true;
+
+      particles.forEach((particle) => {
+        scene.remove(particle);
+      });
+
+      particles.length = 0;
+
+      placeSquaresAtStart();
+
+      showMessage(
+        "Trascina i quadrati colorati sulla griglia.",
+        ""
+      );
+    }
+
+    function showHint() {
+      if (gameLocked) {
+        resetGame();
+      }
+
+      /*
+        Sviluppo corretto a croce:
+
+              □
+          □ □ □ □
+              □
+      */
+
+      const hintPositions = [
+        { column: 3, row: 1 },
+        { column: 1, row: 2 },
+        { column: 2, row: 2 },
+        { column: 3, row: 2 },
+        { column: 4, row: 2 },
+        { column: 3, row: 3 }
+      ];
+
+      squares.forEach((square, index) => {
+        const target = hintPositions[index];
+        const worldPosition = gridToWorld(
+          target.column,
+          target.row
+        );
+
+        square.position.set(
+          worldPosition.x,
+          worldPosition.y,
+          0.2
+        );
+
+        square.userData.gridColumn =
+          target.column;
+
+        square.userData.gridRow =
+          target.row;
+
+        square.userData.onGrid = true;
+        square.visible = true;
+      });
+
+      updateCounter();
+
+      showMessage(
+        "💡 Ecco un possibile sviluppo. Prova a premere Piega!",
+        "info"
+      );
+    }
+
+    function shakeSquares() {
+      const startTime = performance.now();
+      const originalPositions = squares.map(
+        (square) => square.position.x
+      );
+
+      function shake(time) {
+        const elapsed = time - startTime;
+
+        if (elapsed > 500) {
+          squares.forEach((square, index) => {
+            square.position.x =
+              originalPositions[index];
+          });
+
+          return;
+        }
+
+        const offset =
+          Math.sin(elapsed * 0.06) * 0.08;
+
+        squares.forEach((square, index) => {
+          square.position.x =
+            originalPositions[index] + offset;
+        });
+
+        requestAnimationFrame(shake);
+      }
+
+      requestAnimationFrame(shake);
+    }
+
+    // =========================================================
+    // INTERFACCIA
+    // =========================================================
+
+    function updateCounter() {
+      const count = squares.filter(
+        (square) => square.userData.onGrid
+      ).length;
+
+      document.getElementById(
+        "contatore"
+      ).textContent =
+        `Quadrati sulla griglia: ${count} / 6`;
+    }
+
+    function showMessage(text, type) {
+      const element =
+        document.getElementById("messaggio");
+
+      element.textContent = text;
+      element.className = type || "";
+    }
+
+    // =========================================================
+    // RIDIMENSIONAMENTO
+    // =========================================================
+
+    function resizeScene() {
+      const aspect =
+        window.innerWidth / window.innerHeight;
+
+      const verticalSize = 6;
+
+      camera.left = -verticalSize * aspect;
+      camera.right = verticalSize * aspect;
+      camera.top = verticalSize;
+      camera.bottom = -verticalSize;
+
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+      );
+
+      if (window.innerWidth < 760) {
+        GRID_CENTER_X = 0.6;
+        GRID_CENTER_Y = 0.4;
+      } else {
+        GRID_CENTER_X = 0.5;
+        GRID_CENTER_Y = -0.2;
+      }
+
+      createGrid();
+    }
+
+    window.addEventListener("resize", resizeScene);
+
+    // =========================================================
+    // ANIMAZIONE PRINCIPALE
+    // =========================================================
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+
+      updateCubeAnimation(time);
+      updateParticles();
+
+      if (
+        gameLocked &&
+        !cubeAnimation &&
+        cubeGroup.children.length > 0
+      ) {
+        cubeGroup.rotation.y += 0.008;
+        cubeGroup.rotation.x += 0.002;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // =========================================================
+    // AVVIO
+    // =========================================================
+
+    resizeScene();
+    createAllSquares();
+    animate(0);
+  </script>
+
+</body>
+</html>
